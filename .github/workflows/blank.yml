@@ -5,6 +5,9 @@ on:
     branches:
       - main  # Or any branch you'd like to trigger this on
 
+permissions:
+  contents: write  # Grant write access to contents (for pushing commits)
+  
 jobs:
   update-static:
     runs-on: ubuntu-latest
