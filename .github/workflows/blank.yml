@@ -1,0 +1,45 @@
+name: Update Static Files
+
+on:
+  push:
+    branches:
+      - main  # Or any branch you'd like to trigger this on
+
+jobs:
+  update-static:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Git
+      run: |
+        git config --global user.name "respectTheMonkey"
+        git config --global user.email "smkvr98+dpd@gmail.com"
+        
+    - name: Clone tipitaka.lk repo with sparse-checkout
+      run: |
+        git clone --filter=blob:none --no-checkout https://github.com/pathnirvana/tipitaka.lk
+        cd tipitaka.lk
+        git sparse-checkout init --cone
+        git sparse-checkout set public/static/
+        git checkout master
+        cd ..
+        
+    - name: Check and move 'public/static/' if needed
+      run: |
+        if [ ! -d "bjt/public/static" ]; then
+          mkdir -p bjt/public/static
+        fi
+        
+        if ! diff -r tipitaka.lk/public/static bjt/public/static >/dev/null 2>&1; then
+          rm -rf bjt/public/static
+          mv tipitaka.lk/public/static bjt/public
+        fi
+
+    - name: Commit and push changes
+      run: |
+        git add .
+        git commit -m "Update sparse-checkout config" || echo "No changes to commit"
+        git push origin main
