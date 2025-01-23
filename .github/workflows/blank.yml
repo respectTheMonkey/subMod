@@ -20,6 +20,7 @@ jobs:
       run: |
         git config --global user.name "respectTheMonkey"
         git config --global user.email "smkvr98+dpd@gmail.com"
+        git pull
         
     - name: Clone tipitaka.lk repo with sparse-checkout
       run: |
