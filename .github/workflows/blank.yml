@@ -40,37 +40,37 @@ jobs:
         git checkout main
         cd ..
         
-    - name: Check and move 'public/static/text' if needed
+    - name: Move 'public/static/text' to resources/bjt
       run: |
-        if [ ! -d "bjt/public/static/text" ]; then
-          mkdir -p bjt/public/static/text
+        if [ ! -d "resources/bjt/public/static/text" ]; then
+          mkdir -p resources/bjt/public/static/text
         fi
         
-        if ! diff -r tipitaka.lk/public/static/text bjt/public/static/text >/dev/null 2>&1; then
-          rm -rf bjt/public/static/text
-          mv tipitaka.lk/public/static/text bjt/public/static
+        if ! diff -r tipitaka.lk/public/static/text resources/bjt/public/static/text >/dev/null 2>&1; then
+          rm -rf resources/bjt/public/static/text
+          mv tipitaka.lk/public/static/text resources/bjt/public/static
         fi
 
-    - name: Check and move 'dpd' if needed
+    - name: Move 'dpd' to resources/sc_data
       run: |
-        if [ ! -d "sc-data/dpd" ]; then
-          mkdir -p sc-data/dpd
+        if [ ! -d "resources/sc_data/dpd" ]; then
+          mkdir -p resources/sc_data/dpd
         fi
         
-        if ! diff -r sc-data/dpd sc-data/dpd >/dev/null 2>&1; then
-          rm -rf sc-data/dpd
-          mv sc-data/dpd sc-data
+        if ! diff -r sc-data/dpd resources/sc_data/dpd >/dev/null 2>&1; then
+          rm -rf resources/sc_data/dpd
+          mv sc-data/dpd resources/sc_data
         fi
 
-    - name: Check and move 'sc_bilara_data/root/pli/ms' if needed
+    - name: Move 'sc_bilara_data/root/pli/ms' to resources/sc_data
       run: |
-        if [ ! -d "sc-data/sc_bilara_data/root/pli/ms" ]; then
-          mkdir -p sc-data/sc_bilara_data/root/pli/ms
+        if [ ! -d "resources/sc_data/sc_bilara_data/root/pli/ms" ]; then
+          mkdir -p resources/sc_data/sc_bilara_data/root/pli/ms
         fi
         
-        if ! diff -r sc-data/sc_bilara_data/root/pli/ms sc-data/sc_bilara_data/root/pli/ms >/dev/null 2>&1; then
-          rm -rf sc-data/sc_bilara_data/root/pli/ms
-          mv sc-data/sc_bilara_data/root/pli/ms sc-data/sc_bilara_data/root/pli
+        if ! diff -r sc-data/sc_bilara_data/root/pli/ms resources/sc_data/sc_bilara_data/root/pli/ms >/dev/null 2>&1; then
+          rm -rf resources/sc_data/sc_bilara_data/root/pli/ms
+          mv sc-data/sc_bilara_data/root/pli/ms resources/sc_data/sc_bilara_data/root/pli
         fi
 
     - name: Commit and push changes
