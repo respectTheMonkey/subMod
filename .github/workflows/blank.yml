@@ -37,7 +37,7 @@ jobs:
         cd sc-data
         git sparse-checkout init --cone
         git sparse-checkout set dpd sc_bilara_data/root/pli/ms
-        git checkout master
+        git checkout main
         cd ..
         
     - name: Check and move 'public/static/text' if needed
