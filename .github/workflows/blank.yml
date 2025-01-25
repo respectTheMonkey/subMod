@@ -42,7 +42,7 @@ jobs:
           git sparse-checkout init --cone
           
           # Set multiple folders at once
-          git sparse-checkout set $folders
+          git sparse-checkout set "$folders"
           git checkout $branch
           
           cd ..
@@ -51,7 +51,7 @@ jobs:
             if [ -d "$repo_name/$folder" ]; then
               target_dir="resources/$(basename $repo_name)/$folder"
               mkdir -p "$target_dir"
-              cp -u "$repo_name/$folder" "$(dirname $target_dir)"
+              cp -ru "$repo_name/$folder" "$(dirname $target_dir)"
             fi
           done
 
