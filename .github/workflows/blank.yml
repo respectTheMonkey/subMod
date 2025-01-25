@@ -66,8 +66,16 @@ jobs:
               git sparse-checkout set $folder
             else
               echo "Warning: Folder $folder not found in $repo_url@$branch"
+              
+              # Print the folder structure of the repository for debugging
+              echo "Printing folder structure for $repo_name:"
+              git ls-tree -d HEAD
             fi
           done
+
+          # List the sparse-checkout folders if multiple folders are being checked out
+          echo "Listing sparse-checkout directories:"
+          git sparse-checkout list || echo "No directories set in sparse-checkout."
 
           cd ..
           echo "Returning to the root directory."
