@@ -51,10 +51,7 @@ jobs:
             if [ -d "$repo_name/$folder" ]; then
               target_dir="resources/$(basename $repo_name)/$folder"
               mkdir -p "$target_dir"
-              if ! diff -r "$repo_name/$folder" "$target_dir" >/dev/null 2>&1; then
-                rm -rf "$target_dir"
-                mv "$repo_name/$folder" "$(dirname $target_dir)"
-              fi
+              cp -u "$repo_name/$folder" "$(dirname $target_dir)"
             fi
           done
 
