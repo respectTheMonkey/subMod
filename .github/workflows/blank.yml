@@ -42,11 +42,8 @@ jobs:
           git checkout $branch
           git sparse-checkout init --cone
           
-          for folder in $folders; do
-            if git ls-tree -d HEAD $folder; then
-              git sparse-checkout set $folder
-            fi
-          done
+          # Set multiple folders at once
+          git sparse-checkout set $folders
 
           cd ..
           
@@ -67,5 +64,6 @@ jobs:
     - name: Commit and push changes
       run: |
         git add .
-        git commit -m "Update sparse-checkout config with new repos" || echo "No changes to commit"
+        commit_date=$(date "+%Y-%m-%d")
+        git commit -m "Sync - $commit_date " || echo "No changes to commit"
         git push origin main
