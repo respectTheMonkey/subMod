@@ -29,6 +29,7 @@ jobs:
     - name: Read submodules.txt and process each submodule
       run: |
         echo "Starting to read submodules.txt and process each submodule..."
+        latest_commit_message=""
         while IFS= read -r line; do
           echo "Processing line: $line"
           
@@ -66,6 +67,11 @@ jobs:
           echo "Listing sparse-checkout directories:"
           git sparse-checkout list || echo "No directories set in sparse-checkout."
 
+          # Get the latest commit hash and message for the submodule
+          latest_commit=$(git log -1 --pretty=format:"%h - %s")
+          echo "Latest commit in $repo_name: $latest_commit"
+          latest_commit_message="$latest_commit_message\n$repo_name: $latest_commit"
+
           cd ..
           echo "Returning to the root directory."
           
@@ -101,6 +107,11 @@ jobs:
         echo "Checking for changes to commit..."
         git add .
         git status
-        git commit -m "Update sparse-checkout config with new repos" || echo "No changes to commit"
-        git push origin main
-        echo "Changes pushed successfully (if any)."
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+        else
+          # Commit with the latest commit messages from submodules
+          git commit -m "Update sparse-checkout config with new repos$latest_commit_message"
+          git push origin main
+          echo "Changes pushed successfully."
+        fi
