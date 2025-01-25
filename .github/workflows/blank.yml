@@ -29,14 +29,23 @@ jobs:
         git sparse-checkout init --cone
         git sparse-checkout set public/static/text
         git checkout master
-        cd ..
-        
+        cd ..        
+    
     - name: Clone sc-data repo with sparse-checkout
       run: |
         git clone --filter=blob:none --no-checkout https://github.com/digitalpalidictionary/sc-data
         cd sc-data
         git sparse-checkout init --cone
         git sparse-checkout set dpd sc_bilara_data/root/pli/ms
+        git checkout main
+        cd ..
+    
+    - name: Clone tipitaka-xml repo with sparse-checkout
+      run: |
+        git clone --filter=blob:none --no-checkout https://github.com/vipassanatech/tipitaka-xml
+        cd tipitaka-xml
+        git sparse-checkout init --cone
+        git sparse-checkout set romn
         git checkout main
         cd ..
         
@@ -71,6 +80,17 @@ jobs:
         if ! diff -r sc-data/sc_bilara_data/root/pli/ms resources/sc_data/sc_bilara_data/root/pli/ms >/dev/null 2>&1; then
           rm -rf resources/sc_data/sc_bilara_data/root/pli/ms
           mv sc-data/sc_bilara_data/root/pli/ms resources/sc_data/sc_bilara_data/root/pli
+        fi
+
+    - name: Move 'romn' to resources/tipitaka_xml
+      run: |
+        if [ ! -d "resources/tipitaka_xml/romn" ]; then
+          mkdir -p resources/tipitaka_xml/romn
+        fi
+        
+        if ! diff -r tipitaka-xml/romn resources/tipitaka_xml/romn >/dev/null 2>&1; then
+          rm -rf resources/tipitaka_xml/romn
+          mv tipitaka-xml/romn resources/tipitaka_xml
         fi
 
     - name: Commit and push changes
