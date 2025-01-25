@@ -58,22 +58,11 @@ jobs:
           echo "Initializing sparse-checkout..."
           git sparse-checkout init --cone
           
-          # Verify each folder exists before performing the sparse-checkout set
-          for folder in $folders; do
-            echo "Checking if folder exists: $folder"
-            if git ls-tree -d HEAD $folder; then
-              echo "Folder $folder found, performing sparse-checkout set."
-              git sparse-checkout set $folder
-            else
-              echo "Warning: Folder $folder not found in $repo_url@$branch"
-              
-              # Print the folder structure of the repository for debugging
-              echo "Printing folder structure for $repo_name:"
-              git ls-tree -d HEAD
-            fi
-          done
+          # Sparse-checkout multiple folders at once
+          echo "Setting sparse-checkout for folders: $folders"
+          git sparse-checkout set $folders
 
-          # List the sparse-checkout folders if multiple folders are being checked out
+          # List the sparse-checkout directories
           echo "Listing sparse-checkout directories:"
           git sparse-checkout list || echo "No directories set in sparse-checkout."
 
