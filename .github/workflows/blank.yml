@@ -28,32 +28,26 @@ jobs:
       run: |
         latest_commit_message=""
         while IFS= read -r line; do
-          # Skip empty or comment lines
           if [[ -z "$line" || "$line" == \#* ]]; then continue; fi
 
-          # Extract repository URL, branch, and folders
           repo_url=$(echo $line | awk '{print $1}')
           branch=$(echo $line | awk '{print $2}')
           folders=$(echo $line | cut -d' ' -f3-)
 
           repo_name=$(basename $repo_url .git)
 
-          # Clone the repo
           git clone --filter=blob:none --no-checkout $repo_url
           cd $repo_name
 
-          # Checkout branch and set sparse-checkout
           git checkout $branch
           git sparse-checkout init --cone
           git sparse-checkout set $folders
 
-          # Capture the latest commit message
           latest_commit=$(git log -1 --pretty=format:"%h - %s")
           latest_commit_message="$latest_commit_message\n$repo_name: $latest_commit"
 
           cd ..
 
-          # Move the required folders
           for folder in $folders; do
             if [ -d "$repo_name/$folder" ]; then
               target_dir="resources/$(basename $repo_name)/$folder"
@@ -62,7 +56,6 @@ jobs:
             fi
           done
 
-          # Clean up
           rm -rf $repo_name
         done < submodules.txt
 
