@@ -1,10 +1,8 @@
 name: Sync
 
 on:
-  push:
-    branches:
-      - main
-
+  schedule:
+    - cron: '*/5 * * * *'  # This runs the workflow every 5 minutes
 permissions:
   contents: write
 
