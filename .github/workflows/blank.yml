@@ -67,3 +67,4 @@ jobs:
         else
           git commit -m "Update sparse-checkout config with new repos$latest_commit_message"
           git push origin main
+        fi
