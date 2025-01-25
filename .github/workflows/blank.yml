@@ -31,20 +31,25 @@ jobs:
             continue
           fi
           
-          # Extract repository URL and folder paths
+          # Extract repository URL, branch, and folder paths
           repo_url=$(echo $line | awk '{print $1}')
-          folders=$(echo $line | cut -d' ' -f2-)
+          branch=$(echo $line | awk '{print $2}')
+          folders=$(echo $line | cut -d' ' -f3-)
 
           # Clone the repository with sparse-checkout
           repo_name=$(basename $repo_url .git)
           git clone --filter=blob:none --no-checkout $repo_url
           cd $repo_name
           
+          # Checkout the specified branch
+          git checkout $branch
+          
+          # Initialize sparse-checkout and set required folders
           git sparse-checkout init --cone
           for folder in $folders; do
             git sparse-checkout set $folder
           done
-          git checkout main
+          
           cd ..
           
           # Move the required folders to the target directory
