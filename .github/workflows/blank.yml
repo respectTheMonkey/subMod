@@ -11,7 +11,7 @@ permissions:
 jobs:
   update-static:
     runs-on: ubuntu-latest
-
+    
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
@@ -20,39 +20,44 @@ jobs:
 
     - name: Set up Git
       run: |
-        git config --global user.name "digitalpalidictionary"
-        git config --global user.email "digitalpalidictionary@gmail.com"
+        git config --global user.name "Ariya Git Purisa"
+        git config --global user.email "ariyagitpurisa@github"
         git pull
 
     - name: Read submodules.txt and process each submodule
       run: |
-        latest_commit_message=""
         while IFS= read -r line; do
-          if [[ -z "$line" || "$line" == \#* ]]; then continue; fi
-
+          if [[ -z "$line" || "$line" == \#* ]]; then
+            continue
+          fi
+          
           repo_url=$(echo $line | awk '{print $1}')
           branch=$(echo $line | awk '{print $2}')
           folders=$(echo $line | cut -d' ' -f3-)
 
           repo_name=$(basename $repo_url .git)
-
           git clone --filter=blob:none --no-checkout $repo_url
           cd $repo_name
 
           git checkout $branch
           git sparse-checkout init --cone
-          git sparse-checkout set $folders
-
-          latest_commit=$(git log -1 --pretty=format:"%h - %s")
-          latest_commit_message="$latest_commit_message\n$repo_name: $latest_commit"
+          
+          for folder in $folders; do
+            if git ls-tree -d HEAD $folder; then
+              git sparse-checkout set $folder
+            fi
+          done
 
           cd ..
-
+          
           for folder in $folders; do
             if [ -d "$repo_name/$folder" ]; then
               target_dir="resources/$(basename $repo_name)/$folder"
               mkdir -p "$target_dir"
-              mv "$repo_name/$folder" "$target_dir"
+              if ! diff -r "$repo_name/$folder" "$target_dir" >/dev/null 2>&1; then
+                rm -rf "$target_dir"
+                mv "$repo_name/$folder" "$(dirname $target_dir)"
+              fi
             fi
           done
 
@@ -62,9 +67,5 @@ jobs:
     - name: Commit and push changes
       run: |
         git add .
-        if git diff --cached --quiet; then
-          echo "No changes to commit"
-        else
-          git commit -m "Update sparse-checkout config with new repos$latest_commit_message"
-          git push origin main
-        fi
+        git commit -m "Update sparse-checkout config with new repos" || echo "No changes to commit"
+        git push origin main
