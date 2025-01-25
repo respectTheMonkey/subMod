@@ -1,118 +1,76 @@
-name: Update Static Files
+name: Sync
 
 on:
   push:
     branches:
-      - main  # Or any branch you'd like to trigger this on
+      - main
 
 permissions:
-  contents: write  # Grant write access to contents (for pushing commits)
-  
+  contents: write
+
 jobs:
   update-static:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
       with:
-        fetch-depth: 0  # Fetch all history for verbose logging
+        fetch-depth: 0
 
     - name: Set up Git
       run: |
-        echo "Setting up Git user..."
         git config --global user.name "digitalpalidictionary"
         git config --global user.email "digitalpalidictionary@gmail.com"
         git pull
-        echo "Git setup complete."
-        
+
     - name: Read submodules.txt and process each submodule
       run: |
-        echo "Starting to read submodules.txt and process each submodule..."
         latest_commit_message=""
         while IFS= read -r line; do
-          echo "Processing line: $line"
-          
-          # Skip empty lines or comment lines
-          if [[ -z "$line" || "$line" == \#* ]]; then
-            echo "Skipping empty or comment line: $line"
-            continue
-          fi
-          
-          # Extract repository URL, branch, and folder paths
+          # Skip empty or comment lines
+          if [[ -z "$line" || "$line" == \#* ]]; then continue; fi
+
+          # Extract repository URL, branch, and folders
           repo_url=$(echo $line | awk '{print $1}')
           branch=$(echo $line | awk '{print $2}')
           folders=$(echo $line | cut -d' ' -f3-)
 
-          echo "Cloning repository: $repo_url, Branch: $branch"
-          # Clone the repository with sparse-checkout
           repo_name=$(basename $repo_url .git)
+
+          # Clone the repo
           git clone --filter=blob:none --no-checkout $repo_url
           cd $repo_name
-          echo "Cloned $repo_name successfully."
 
-          # Checkout the specified branch
-          echo "Checking out branch: $branch"
+          # Checkout branch and set sparse-checkout
           git checkout $branch
-          
-          # Initialize sparse-checkout and set required folders
-          echo "Initializing sparse-checkout..."
           git sparse-checkout init --cone
-          
-          # Sparse-checkout multiple folders at once
-          echo "Setting sparse-checkout for folders: $folders"
           git sparse-checkout set $folders
 
-          # List the sparse-checkout directories
-          echo "Listing sparse-checkout directories:"
-          git sparse-checkout list || echo "No directories set in sparse-checkout."
-
-          # Get the latest commit hash and message for the submodule
+          # Capture the latest commit message
           latest_commit=$(git log -1 --pretty=format:"%h - %s")
-          echo "Latest commit in $repo_name: $latest_commit"
           latest_commit_message="$latest_commit_message\n$repo_name: $latest_commit"
 
           cd ..
-          echo "Returning to the root directory."
-          
-          # Move the required folders to the target directory only if they exist
+
+          # Move the required folders
           for folder in $folders; do
             if [ -d "$repo_name/$folder" ]; then
-              echo "Moving folder $folder to resources/$(basename $repo_name)/$folder"
               target_dir="resources/$(basename $repo_name)/$folder"
-              if [ ! -d "$target_dir" ]; then
-                mkdir -p "$target_dir"
-                echo "Created directory: $target_dir"
-              fi
-              
-              if ! diff -r "$repo_name/$folder" "$target_dir" >/dev/null 2>&1; then
-                echo "Contents of $folder have changed. Moving new contents..."
-                rm -rf "$target_dir"
-                mv "$repo_name/$folder" "$(dirname $target_dir)"
-              else
-                echo "No changes to folder $folder, skipping move."
-              fi
-            else
-              echo "Folder $folder does not exist in $repo_name, skipping move."
+              mkdir -p "$target_dir"
+              mv "$repo_name/$folder" "$target_dir"
             fi
           done
 
           # Clean up
           rm -rf $repo_name
-          echo "Cleaned up repository $repo_name."
         done < submodules.txt
 
     - name: Commit and push changes
       run: |
-        echo "Checking for changes to commit..."
         git add .
-        git status
         if git diff --cached --quiet; then
           echo "No changes to commit"
         else
-          # Commit with the latest commit messages from submodules
-          echo -e "Changes committed with the following latest commit messages:\n$latest_commit_message"
           git commit -m "Update sparse-checkout config with new repos$latest_commit_message"
           git push origin main
-          echo "Changes pushed successfully."
-        fi
