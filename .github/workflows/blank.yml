@@ -15,19 +15,26 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Fetch all history for verbose logging
 
     - name: Set up Git
       run: |
+        echo "Setting up Git user..."
         git config --global user.name "respectTheMonkey"
         git config --global user.email "smkvr98+dpd@gmail.com"
         git pull
+        echo "Git setup complete."
         
     - name: Read submodules.txt and process each submodule
       run: |
-        # Create an array from the submodules.txt file
+        echo "Starting to read submodules.txt and process each submodule..."
         while IFS= read -r line; do
+          echo "Processing line: $line"
+          
           # Skip empty lines or comment lines
           if [[ -z "$line" || "$line" == \#* ]]; then
+            echo "Skipping empty or comment line: $line"
             continue
           fi
           
@@ -36,47 +43,67 @@ jobs:
           branch=$(echo $line | awk '{print $2}')
           folders=$(echo $line | cut -d' ' -f3-)
 
+          echo "Cloning repository: $repo_url, Branch: $branch"
           # Clone the repository with sparse-checkout
           repo_name=$(basename $repo_url .git)
           git clone --filter=blob:none --no-checkout $repo_url
           cd $repo_name
-          
+          echo "Cloned $repo_name successfully."
+
           # Checkout the specified branch
+          echo "Checking out branch: $branch"
           git checkout $branch
           
           # Initialize sparse-checkout and set required folders
+          echo "Initializing sparse-checkout..."
           git sparse-checkout init --cone
-
+          
           # Verify each folder exists before performing the sparse-checkout set
           for folder in $folders; do
+            echo "Checking if folder exists: $folder"
             if git ls-tree -d HEAD $folder; then
+              echo "Folder $folder found, performing sparse-checkout set."
               git sparse-checkout set $folder
             else
               echo "Warning: Folder $folder not found in $repo_url@$branch"
             fi
           done
-          
+
           cd ..
+          echo "Returning to the root directory."
           
-          # Move the required folders to the target directory
+          # Move the required folders to the target directory only if they exist
           for folder in $folders; do
-            target_dir="resources/$(basename $repo_name)/$folder"
-            if [ ! -d "$target_dir" ]; then
-              mkdir -p "$target_dir"
-            fi
-            
-            if ! diff -r "$repo_name/$folder" "$target_dir" >/dev/null 2>&1; then
-              rm -rf "$target_dir"
-              mv "$repo_name/$folder" "$(dirname $target_dir)"
+            if [ -d "$repo_name/$folder" ]; then
+              echo "Moving folder $folder to resources/$(basename $repo_name)/$folder"
+              target_dir="resources/$(basename $repo_name)/$folder"
+              if [ ! -d "$target_dir" ]; then
+                mkdir -p "$target_dir"
+                echo "Created directory: $target_dir"
+              fi
+              
+              if ! diff -r "$repo_name/$folder" "$target_dir" >/dev/null 2>&1; then
+                echo "Contents of $folder have changed. Moving new contents..."
+                rm -rf "$target_dir"
+                mv "$repo_name/$folder" "$(dirname $target_dir)"
+              else
+                echo "No changes to folder $folder, skipping move."
+              fi
+            else
+              echo "Folder $folder does not exist in $repo_name, skipping move."
             fi
           done
 
           # Clean up
           rm -rf $repo_name
+          echo "Cleaned up repository $repo_name."
         done < submodules.txt
 
     - name: Commit and push changes
       run: |
+        echo "Checking for changes to commit..."
         git add .
+        git status
         git commit -m "Update sparse-checkout config with new repos" || echo "No changes to commit"
         git push origin main
+        echo "Changes pushed successfully (if any)."
