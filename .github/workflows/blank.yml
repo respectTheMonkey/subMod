@@ -21,8 +21,8 @@ jobs:
     - name: Set up Git
       run: |
         echo "Setting up Git user..."
-        git config --global user.name "respectTheMonkey"
-        git config --global user.email "smkvr98+dpd@gmail.com"
+        git config --global user.name "digitalpalidictionary"
+        git config --global user.email "digitalpalidictionary@gmail.com"
         git pull
         echo "Git setup complete."
         
