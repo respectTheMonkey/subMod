@@ -39,12 +39,12 @@ jobs:
           git clone --filter=blob:none --no-checkout $repo_url
           cd $repo_name
 
-          git checkout $branch
           git sparse-checkout init --cone
           
           # Set multiple folders at once
           git sparse-checkout set $folders
-
+          git checkout $branch
+          
           cd ..
           
           for folder in $folders; do
