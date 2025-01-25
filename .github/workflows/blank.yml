@@ -22,76 +22,47 @@ jobs:
         git config --global user.email "smkvr98+dpd@gmail.com"
         git pull
         
-    - name: Clone tipitaka.lk repo with sparse-checkout
+    - name: Read submodules.txt and process each submodule
       run: |
-        git clone --filter=blob:none --no-checkout https://github.com/pathnirvana/tipitaka.lk
-        cd tipitaka.lk
-        git sparse-checkout init --cone
-        git sparse-checkout set public/static/text
-        git checkout master
-        cd ..        
-    
-    - name: Clone sc-data repo with sparse-checkout
-      run: |
-        git clone --filter=blob:none --no-checkout https://github.com/digitalpalidictionary/sc-data
-        cd sc-data
-        git sparse-checkout init --cone
-        git sparse-checkout set dpd sc_bilara_data/root/pli/ms
-        git checkout main
-        cd ..
-    
-    - name: Clone tipitaka-xml repo with sparse-checkout
-      run: |
-        git clone --filter=blob:none --no-checkout https://github.com/vipassanatech/tipitaka-xml
-        cd tipitaka-xml
-        git sparse-checkout init --cone
-        git sparse-checkout set romn
-        git checkout main
-        cd ..
-        
-    - name: Move 'public/static/text' to resources/bjt
-      run: |
-        if [ ! -d "resources/bjt/public/static/text" ]; then
-          mkdir -p resources/bjt/public/static/text
-        fi
-        
-        if ! diff -r tipitaka.lk/public/static/text resources/bjt/public/static/text >/dev/null 2>&1; then
-          rm -rf resources/bjt/public/static/text
-          mv tipitaka.lk/public/static/text resources/bjt/public/static
-        fi
+        # Create an array from the submodules.txt file
+        while IFS= read -r line; do
+          # Skip empty lines or comment lines
+          if [[ -z "$line" || "$line" == \#* ]]; then
+            continue
+          fi
+          
+          # Extract repository URL and folder paths
+          repo_url=$(echo $line | awk '{print $1}')
+          folders=$(echo $line | cut -d' ' -f2-)
 
-    - name: Move 'dpd' to resources/sc_data
-      run: |
-        if [ ! -d "resources/sc_data/dpd" ]; then
-          mkdir -p resources/sc_data/dpd
-        fi
-        
-        if ! diff -r sc-data/dpd resources/sc_data/dpd >/dev/null 2>&1; then
-          rm -rf resources/sc_data/dpd
-          mv sc-data/dpd resources/sc_data
-        fi
+          # Clone the repository with sparse-checkout
+          repo_name=$(basename $repo_url .git)
+          git clone --filter=blob:none --no-checkout $repo_url
+          cd $repo_name
+          
+          git sparse-checkout init --cone
+          for folder in $folders; do
+            git sparse-checkout set $folder
+          done
+          git checkout main
+          cd ..
+          
+          # Move the required folders to the target directory
+          for folder in $folders; do
+            target_dir="resources/$(basename $repo_name)/$folder"
+            if [ ! -d "$target_dir" ]; then
+              mkdir -p "$target_dir"
+            fi
+            
+            if ! diff -r "$repo_name/$folder" "$target_dir" >/dev/null 2>&1; then
+              rm -rf "$target_dir"
+              mv "$repo_name/$folder" "$(dirname $target_dir)"
+            fi
+          done
 
-    - name: Move 'sc_bilara_data/root/pli/ms' to resources/sc_data
-      run: |
-        if [ ! -d "resources/sc_data/sc_bilara_data/root/pli/ms" ]; then
-          mkdir -p resources/sc_data/sc_bilara_data/root/pli/ms
-        fi
-        
-        if ! diff -r sc-data/sc_bilara_data/root/pli/ms resources/sc_data/sc_bilara_data/root/pli/ms >/dev/null 2>&1; then
-          rm -rf resources/sc_data/sc_bilara_data/root/pli/ms
-          mv sc-data/sc_bilara_data/root/pli/ms resources/sc_data/sc_bilara_data/root/pli
-        fi
-
-    - name: Move 'romn' to resources/tipitaka_xml
-      run: |
-        if [ ! -d "resources/tipitaka_xml/romn" ]; then
-          mkdir -p resources/tipitaka_xml/romn
-        fi
-        
-        if ! diff -r tipitaka-xml/romn resources/tipitaka_xml/romn >/dev/null 2>&1; then
-          rm -rf resources/tipitaka_xml/romn
-          mv tipitaka-xml/romn resources/tipitaka_xml
-        fi
+          # Clean up
+          rm -rf $repo_name
+        done < submodules.txt
 
     - name: Commit and push changes
       run: |
