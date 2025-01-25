@@ -111,6 +111,7 @@ jobs:
           echo "No changes to commit"
         else
           # Commit with the latest commit messages from submodules
+          echo -e "Changes committed with the following latest commit messages:\n$latest_commit_message"
           git commit -m "Update sparse-checkout config with new repos$latest_commit_message"
           git push origin main
           echo "Changes pushed successfully."
