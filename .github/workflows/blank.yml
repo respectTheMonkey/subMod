@@ -46,8 +46,14 @@ jobs:
           
           # Initialize sparse-checkout and set required folders
           git sparse-checkout init --cone
+
+          # Verify each folder exists before performing the sparse-checkout set
           for folder in $folders; do
-            git sparse-checkout set $folder
+            if git ls-tree -d HEAD $folder; then
+              git sparse-checkout set $folder
+            else
+              echo "Warning: Folder $folder not found in $repo_url@$branch"
+            fi
           done
           
           cd ..
