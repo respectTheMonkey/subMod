@@ -60,7 +60,7 @@ jobs:
             if [ -d "$temp_dir/$repo_name/$folder" ]; then
               target_dir="$dest_folder/$folder"
               mkdir -p "$target_dir"
-              cp -ru "$temp_dir/$repo_name/$folder" "$target_dir"
+              cp -ru "$temp_dir/$repo_name/$folder"/* "$target_dir"
             fi
           done
 
