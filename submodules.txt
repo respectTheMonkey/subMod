@@ -1,3 +1,3 @@
-https://github.com/pathnirvana/tipitaka.lk master public/static/text
-https://github.com/digitalpalidictionary/sc-data main dpd sc_bilara_data/root/pli/ms
-https://github.com/vipassanatech/tipitaka-xml main romn
+bjt https://github.com/pathnirvana/tipitaka.lk master public/static/text
+sc-data https://github.com/digitalpalidictionary/sc-data main dpd sc_bilara_data/root/pli/ms
+tipitaka-xml https://github.com/vipassanatech/tipitaka-xml main romn
