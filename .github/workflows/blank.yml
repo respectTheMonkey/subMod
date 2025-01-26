@@ -2,8 +2,10 @@ name: Sync
 
 on:
   push:
-    branches: 
+    branches:
       - main
+  schedule:
+    - cron: '30 3 * * 0'  # Sundays @ 9 AM IST 
 permissions:
   contents: write
 
@@ -25,6 +27,9 @@ jobs:
 
     - name: Read submodules.txt and process each submodule
       run: |
+        # Create a temporary folder for cloning repos
+        temp_dir=$(mktemp -d)
+
         while IFS= read -r line; do
           if [[ -z "$line" || "$line" == \#* ]]; then
             continue
@@ -35,32 +40,38 @@ jobs:
           folders=$(echo $line | cut -d' ' -f3-)
 
           repo_name=$(basename $repo_url .git)
-          git clone --filter=blob:none --no-checkout $repo_url
-          cd $repo_name
+          
+          # Clone the repo into the temp directory
+          git clone --filter=blob:none --no-checkout $repo_url "$temp_dir/$repo_name"
+          cd "$temp_dir/$repo_name"
 
           git sparse-checkout init --cone
           
           # Set multiple folders at once
-          echo $folders
-          git sparse-checkout set "$folders"
+          git sparse-checkout set $folders
           git checkout $branch
           
-          cd ..
+          cd -  # Go back to the previous directory
           
+          # Move the selected folders to the root level of the repository
           for folder in $folders; do
-            if [ -d "$repo_name/$folder" ]; then
-              target_dir="resources/$(basename $repo_name)/$folder"
+            if [ -d "$temp_dir/$repo_name/$folder" ]; then
+              target_dir="$folder"
               mkdir -p "$target_dir"
-              cp -ru "$repo_name/$folder" "$(dirname $target_dir)"
+              cp -ru "$temp_dir/$repo_name/$folder" "$target_dir"
             fi
           done
 
-          rm -rf $repo_name
+          # Clean up the temporary folder
+          rm -rf "$temp_dir/$repo_name"
         done < submodules.txt
+
+        # Remove the temporary directory after all processing is done
+        rm -rf $temp_dir
 
     - name: Commit and push changes
       run: |
         git add .
-        commit_date=$(date "+%Y-%m-%d")
+        commit_date=$(TZ='Asia/Colombo' date "+%Y-%m-%d %H:%M:%S")
         git commit -m "Sync - $commit_date " || echo "No changes to commit"
         git push origin main
