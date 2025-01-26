@@ -40,7 +40,7 @@ jobs:
           git sparse-checkout init --cone
           
           # Set multiple folders at once
-          git sparse-checkout set "$folders"
+          git sparse-checkout set $folders
           git checkout $branch
           
           cd ..
