@@ -35,9 +35,11 @@ jobs:
             continue
           fi
           
-          repo_url=$(echo $line | awk '{print $1}')
-          branch=$(echo $line | awk '{print $2}')
-          folders=$(echo $line | cut -d' ' -f3-)
+          # Extract the parameters: destination, repo_url, branch, and folders
+          dest_folder=$(echo $line | awk '{print $1}')
+          repo_url=$(echo $line | awk '{print $2}')
+          branch=$(echo $line | awk '{print $3}')
+          folders=$(echo $line | cut -d' ' -f4-)
 
           repo_name=$(basename $repo_url .git)
           
@@ -53,10 +55,10 @@ jobs:
           
           cd -  # Go back to the previous directory
           
-          # Move the selected folders to the root level of the repository
+          # Move the selected folders to the desired target directory
           for folder in $folders; do
             if [ -d "$temp_dir/$repo_name/$folder" ]; then
-              target_dir="$folder"
+              target_dir="$dest_folder/$folder"
               mkdir -p "$target_dir"
               cp -ru "$temp_dir/$repo_name/$folder" "$target_dir"
             fi
